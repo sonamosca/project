@@ -27,4 +27,5 @@ class AdminDashboardController extends Controller // Renamed to DashboardControl
         
         return view('admin.manage_event'); 
     }
+    
 }

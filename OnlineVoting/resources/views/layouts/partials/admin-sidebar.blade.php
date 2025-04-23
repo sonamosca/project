@@ -22,7 +22,7 @@
         <p class="menu-header">MANAGE</p>
          <ul>
             {{-- Update href with route() when events route exists --}}
-            <li><a href="{{url('manage_event_view')}}"><i class="fas fa-calendar-alt fa-fw"></i> Manage Events</a></li>
+            <li><a href="{{route('admin.events.index')}}"><i class="fas fa-calendar-alt fa-fw"></i> Manage Events</a></li>
             {{-- Update href with route() when candidates route exists --}}
             <li><a href="{{-- route('admin.candidates.index') --}}#candidates"><i class="fas fa-user-tie fa-fw"></i> Manage Candidates</a></li>
             {{-- Update href with route() when voters route exists --}}
