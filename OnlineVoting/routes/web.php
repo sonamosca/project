@@ -5,6 +5,10 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\AdminDashboardController as AdminDashboardController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\ScopeController;
+use App\Http\Controllers\ProgrammeController;
+use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\CandidateController;
 Route::get('/', function () {
     return view('welcome');
 });
@@ -25,8 +29,7 @@ Route::middleware([
 // --- ADMIN ROUTES ---
 Route::prefix('admin')
      ->name('admin.')
-     // ->middleware(['auth', 'isAdmin']) // Add security middleware later!
-     ->middleware(['auth']) // Start with just login required
+     ->middleware(['auth', 'isAdmin'])
      ->group(function () {
 
     // Your Admin Dashboard Route
@@ -35,13 +38,10 @@ Route::prefix('admin')
     ->name('dashboard');
 
     Route::get('/events', [EventController::class, 'index'])
-    ->middleware(['auth']) // Protect the page
-    ->name('events.index'); // Name for the page route
+    ->name('events.index'); 
 
     Route::post('/events', [EventController::class, 'store'])
-    ->middleware(['auth']) // Protect the action
-    ->name('events.store'); // Name referenced in Blade/JS
-
+    ->name('events.store'); 
     
     Route::get('/events/history', [EventController::class, 'showHistoryPage'])
     ->name('events.history_page');
@@ -56,13 +56,30 @@ Route::prefix('admin')
      ->name('events.update');
 
     Route::get('/events/{event}/scan', [EventController::class, 'scanPage'])
-         ->name('events.scan_page'); // admin.events.scan_page - Shows the scan interface for a specific event
-
+         ->name('events.scan_page'); 
     Route::post('/events/{event}/record-vote', [EventController::class, 'recordVote'])
          ->name('events.record_vote'); // admin.events.record_vote - Handles recording a vote via AJAX
 
     Route::get('/events/{event}/recorded-voters', [EventController::class, 'getRecordedVoters'])
          ->name('events.get_recorded_voters'); // admin.events.get_recorded_voters - Gets recorded voters via AJAX
+
+    Route::get('/events/search', [EventController::class, 'search'])
+         ->name('events.search');
+    
+    Route::resource('programmes', ProgrammeController::class);
+
+
+    Route::resource('departments', DepartmentController::class);
+
+     Route::get('/candidates', [CandidateController::class, 'index'])->name('candidates.index');
+     Route::get('/candidates/select-event', [CandidateController::class, 'selectEvent'])->name('candidates.select_event');
+     Route::get('/candidates/event/{event}/manage', [CandidateController::class, 'showManagePage'])->name('candidates.manage');
+     Route::get('/candidates/find-voter', [CandidateController::class, 'findVoter'])->name('candidates.find_voter'); // AJAX
+     Route::post('/candidates', [CandidateController::class, 'store'])->name('candidates.store');
+     Route::delete('/candidates/{candidate}', [CandidateController::class, 'destroy'])->name('candidates.destroy');
+         // --- Scope Management (NEW) ---
+    // This single line creates all the CRUD routes for scopes
+    Route::resource('scopes', ScopeController::class); 
 
     // ... Other admin routes go here later ...
 
@@ -77,10 +94,8 @@ Route::post('/contact/submit', [PageController::class, 'submitContactForm'])->na
 // --- Add the Instructions Route HERE ---
 Route::get('/instructions', [PageController::class, 'instructions'])->name('instructions');
 
-// Route::get('/manage_event_view', [AdminDashboardController::class, 'manageevent']);
 
-// Route::delete('/event-categories/{event}', [EventCategoryController::class, 'destroy'])
-//     ->name('event-categories.destroy');
+
 
 
 

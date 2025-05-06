@@ -2,103 +2,130 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Event; // Use your Event model
+use App\Models\Event;
 use App\Models\Voter;
 use App\Models\VoteRecord;
+use App\Models\Programme;
+// *** ADDED: Use statement for Department ***
+use App\Models\Department;
+// *** REMOVED: Use statement for RelatedClass ***
+// use App\Models\RelatedClass;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class EventController extends Controller
 {
     /**
      * Display the event management page.
      */
-    public function index()
+    public function index(): View // Corrected return type hint
     {
-        $events = Event::latest()->get();
-        return view('admin.manage_event', compact('events'));
+        Log::debug("EventController@index accessed.");
+        // *** CHANGED: Load department instead of relatedClass ***
+        $events = Event::with(['programme', 'department'])->latest()->get();
+        $programmes = Programme::orderBy('name')->get(['id', 'name']);
+        // *** ADDED: Fetch Departments ***
+        $departments = Department::orderBy('name')->get(['id', 'name']);
+        // *** REMOVED: Fetching $classes ***
+        // $classes = RelatedClass::orderBy('name')->get(['id', 'name']);
+        // *** CHANGED: Pass departments, remove classes ***
+        return view('admin.manage_event', compact('events', 'programmes', 'departments'));
     }
 
     /**
      * Store a newly created event in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
      */
     public function store(Request $request): JsonResponse
     {
-        // Validation rules
+        Log::debug("EventController@store request received.", $request->all());
         $validator = Validator::make($request->all(), [
-            'title' => 'required|string|max:255',
+            'title' =>  'required|string|max:255|unique:events,title',
             'description' => 'nullable|string',
             'event_date' => 'nullable|date',
             'location' => 'nullable|string|max:255',
+            'type' => ['required', Rule::in(['all', 'students', 'staff'])],
+            // *** CORRECTED: Added male option ***
+            'gender_restriction' => ['required', Rule::in(['both', 'female', 'male'])],
+            'programme_id' => 'nullable|exists:programmes,id',
+            // *** ADDED: Validation for department_id ***
+            // 'department_id' => 'nullable|exists:departments,id',
         ]);
 
-        // Return errors if validation fails
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422); // 422 Unprocessable Entity
+            Log::warning("Event validation failed.", $validator->errors()->toArray());
+            return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        // Create the event if validation passes
         try {
             $validatedData = $validator->validated();
-            $event = Event::create($validatedData); // Use your Event model
+            $event = Event::create($validatedData);
+            // *** CHANGED: Load department instead of relatedClass ***
+            $event->load(['programme', 'department']);
+            Log::info("Event created successfully.", ['event_id' => $event->id]);
 
-            // Return success response with the created event data
             return response()->json([
                 'message' => 'Event created successfully!',
-                'event' => $event // Send the new event back to the frontend
-            ], 201); // 201 Created
-
+                'event' => $event
+            ], 201);
         } catch (\Exception $e) {
-            Log::error('Error creating event: '.$e->getMessage()); // Log the error
-            return response()->json(['message' => 'An error occurred while saving the event.'], 500); // 500 Internal Server Error
+            Log::error('Error creating event: '.$e->getMessage());
+            return response()->json(['message' => 'An error occurred while saving the event.'], 500);
         }
     }
 
-    public function showHistoryPage(): View 
+    /**
+     * Display the event history page.
+     */
+    public function showHistoryPage(): View
     {
-        $historyEvents = Event::orderBy('created_at', 'desc')->get();
+        Log::debug("EventController@showHistoryPage accessed.");
+        // *** CHANGED: Load department instead of relatedClass ***
+        $historyEvents = Event::with(['programme', 'department'])
+                            ->orderBy('created_at', 'desc')
+                            ->get();
         return view('admin.events.history', compact('historyEvents'));
     }
 
     /**
      * PERMANENTLY remove the specified event from storage.
-     *
-     * @param  \App\Models\Event  $event Automatically resolved by Route Model Binding
-     * @return \Illuminate\Http\JsonResponse
      */
     public function destroy(Event $event): JsonResponse
     {
+        $eventId = $event->id;
+        Log::info("Attempting to delete event.", ['event_id' => $eventId]);
         try {
-            $eventId = $event->id; // Get ID before deleting event
-
-            // ** ADD THIS LINE to delete associated vote records **
-            VoteRecord::where('event_id', $eventId)->delete();
-
-            // Now delete the event itself
-            $event->delete(); // Or $event->forceDelete();
-            $message = 'Event and associated vote records permanently deleted successfully!'; // Updated message
-
-            return response()->json(['message' => $message]);
-
+            $isDeleted = $event->delete();
+            if ($isDeleted) {
+                Log::info("Event deleted successfully.", ['event_id' => $eventId]);
+                return response()->json(['message' => 'Event deleted successfully!']);
+            } else {
+                Log::warning("Event deletion prevented by model event.", ['event_id' => $eventId]);
+                return response()->json(['message' => 'Could not delete event (deletion prevented).'], 500);
+            }
+        } catch (\Illuminate\Database\QueryException $e) {
+            Log::error('Error deleting event due to QueryException (ID: '.$eventId.'): '.$e->getMessage());
+            if ($e->errorInfo[1] == 1451) {
+                return response()->json(['message' => 'Could not delete event. It might still be referenced elsewhere.'], 409);
+            }
+            return response()->json(['message' => 'Could not delete event due to a database issue.'], 500);
         } catch (\Exception $e) {
-            Log::error('Error permanently deleting event (ID: '.$event->id.'): '.$e->getMessage());
-            return response()->json(['message' => 'Could not delete event.'], 500);
+            Log::error('Generic error deleting event (ID: '.$eventId.'): '.$e->getMessage());
+            return response()->json(['message' => 'Could not delete event due to an unexpected error.'], 500);
         }
     }
-        /**
-     * Fetch data for editing a specific event.t
-     *
-     * @param  \App\Models\Event  $event  (Injected by Route Model Binding)
-     * @return \Illuminate\Http\JsonResponse
+
+    /**
+     * Fetch data for editing a specific event.
      */
     public function edit(Event $event): JsonResponse
     {
+        Log::debug("Fetching event for edit.", ['event_id' => $event->id]);
+        // No changes needed, injected event has necessary IDs
         return response()->json(['event' => $event]);
     }
 
@@ -107,38 +134,51 @@ class EventController extends Controller
      */
     public function update(Request $request, Event $event): JsonResponse
     {
-        // Validation rules (similar to store, but 'required' might differ based on needs)
+        Log::debug("EventController@update request received.", ['event_id' => $event->id, 'data' => $request->all()]);
         $validator = Validator::make($request->all(), [
-            'title' => 'required|string|max:255',
+            'title' => [
+                'required', 'string', 'max:255',
+                Rule::unique('events', 'title')->ignore($event->id)
+            ],
             'description' => 'nullable|string',
             'event_date' => 'nullable|date',
             'location' => 'nullable|string|max:255',
+            'type' => ['required', Rule::in(['all', 'students', 'staff'])],
+             // *** CORRECTED: Added male option ***
+            'gender_restriction' => ['required', Rule::in(['both', 'female', 'male'])],
+            'programme_id' => 'nullable|exists:programmes,id',
+             // *** ADDED: Validation for department_id ***
+            // 'department_id' => 'nullable|exists:departments,id',
         ]);
 
-        // Return errors if validation fails
         if ($validator->fails()) {
+            Log::warning("Event update validation failed.", ['event_id' => $event->id, 'errors' => $validator->errors()->toArray()]);
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        // Update the event if validation passes
         try {
             $validatedData = $validator->validated();
-            // Update the existing $event model instance
             $event->update($validatedData);
-
-            // Return success response with the updated event data
+             // *** CHANGED: Load department instead of relatedClass ***
+            $event->load(['programme', 'department']);
+            Log::info("Event updated successfully.", ['event_id' => $event->id]);
             return response()->json([
                 'message' => 'Event updated successfully!',
-                'event' => $event // Send the updated event back to the frontend
-            ], 200); // 200 OK
-
+                'event' => $event
+            ], 200);
         } catch (\Exception $e) {
             Log::error('Error updating event (ID: '.$event->id.'): '.$e->getMessage());
             return response()->json(['message' => 'An error occurred while updating the event.'], 500);
         }
     }
+
+    /**
+     * Display the voter scanning page for an event.
+     */
     public function scanPage(Event $event): View
     {
+        // No change needed
+        Log::debug("Accessing scan page.", ['event_id' => $event->id]);
         return view('admin.events.scan', compact('event'));
     }
 
@@ -147,66 +187,125 @@ class EventController extends Controller
      */
     public function recordVote(Request $request, Event $event): JsonResponse
     {
+        // --- 1. Validation --- (No change needed)
         $validator = Validator::make($request->all(), [
-            // ** CHANGE: Use 'voterID' for validation **
-            'voterID' => 'required|string|max:50|exists:voters,voterID', // <<< Use voterID here
-        ], [
-            // ** Adjust error messages **
-            'voterID.required' => 'Voter ID is required.',
-            'voterID.exists'   => 'Voter ID not found in the system.',
-        ]);
+             'voter_id' => 'required|string|max:100|exists:voters,voter_id',
+         ], [ /* ... */ ]);
+         if ($validator->fails()) { return response()->json([/*...*/], 422); }
 
-        // ** CHANGE: Use 'voterID' key from request **
-        if ($validator->fails()) {
-             // Pass the specific field name that failed
-             return response()->json(['status' => 'error', 'message' => $validator->errors()->first('voterID')], 422);
-        }
+        // --- 2. Find the Voter --- (No change needed)
+        $scannedVoterIdentifier = $validator->validated()['voter_id'];
+        $voter = Voter::where('voter_id', $scannedVoterIdentifier)->first();
+        if (!$voter) { return response()->json([/*...*/], 404); }
 
-        // ** CHANGE: Use 'voterID' key from validated data **
-        $voterIdInput = $validator->validated()['voterID']; // <<< Use voterID here
+        // --- 3. Check if Already Voted --- (No change needed)
+        $alreadyVoted = VoteRecord::where('voter_id', $voter->id)->where('event_id', $event->id)->exists();
+        if ($alreadyVoted) { return response()->json([/*...*/], 409); }
 
-        // 1. Find the Voter
-        // ** CHANGE: Use Voter model and 'voterID' column **
-        $voter = Voter::where('voterID', $voterIdInput)->first(); // <<< Use voterID here
+        // --- 4. CHECK ELIGIBILITY LOGIC --- (Calls the simplified function below)
+        $isEligible = $this->checkVoterEligibility($voter, $event);
+        if (!$isEligible) { return response()->json(['success' => false, 'message' => 'Error: Voter is not eligible for this specific event.'], 403); }
 
-        if (!$voter) {
-            Log::warning("Voter ID {$voterIdInput} passed validation but not found for Event ID {$event->id}.");
-            return response()->json(['status' => 'error', 'message' => 'Voter ID not found.'], 404);
-        }
-
-        // 2. Check if already voted in THIS event
-        $alreadyVoted = VoteRecord::where('event_id', $event->id)
-                                  ->where('voter_id', $voter->id) // Still uses voter->id (primary key) for relation
-                                  ->exists();
-
-        if ($alreadyVoted) {
-            return response()->json([
-                'status' => 'info',
-                'message' => 'Already recorded for this event.',
-                // ** CHANGE: Include 'voterID' in returned fields, adjust others **
-                'voter' => $voter->only(['id', 'voterID', 'name', 'gender', 'programme', 'email']) // <<< Include voterID
-            ], 200);
-        }
-
-        // 3. Record the vote
+        // --- 5. Record the Vote --- (No change needed)
         try {
             VoteRecord::create([
                 'event_id' => $event->id,
-                'voter_id' => $voter->id, // Still uses primary key 'id' for relation
+                'voter_id' => $voter->id,
             ]);
+            Log::info("Vote recorded successfully: Voter {$voter->id} / Event {$event->id}");
 
+            // --- 6. Return Success Response ---
+            // *** CHANGED: Load programme/department for display, removed class ***
+            $voter->loadMissing('programme.department');
+            $voterData = [
+                 'id' => $voter->id,
+                 'voter_id' => $voter->voter_id,
+                 'name' => $voter->name,
+                 'gender' => $voter->gender,
+                 'programme_name' => $voter->programme?->name ?? 'N/A', // Use loaded programme name
+                 'department_name' => $voter->programme?->department?->name ?? 'N/A', // Use loaded dept name
+                 'email' => $voter->email,
+                 'role' => $voter->role,
+                 // *** REMOVED: class_name ***
+            ];
             return response()->json([
-                'status' => 'success',
-                'message' => 'Vote recorded successfully!',
-                 // ** CHANGE: Include 'voterID' in returned fields, adjust others **
-                'voter' => $voter->only(['id', 'voterID', 'name', 'gender', 'programme', 'email']) // <<< Include voterID
+                'success' => true,
+                'message' => 'Voter eligible and recorded successfully.',
+                'voter'   => $voterData
             ], 201);
 
         } catch (\Exception $e) {
-            Log::error("Record Vote Error: Event ID {$event->id}, Voter ID {$voterIdInput} - " . $e->getMessage());
-            return response()->json(['status' => 'error', 'message' => 'Server error recording vote.'], 500);
+            Log::error("Error recording vote for voter ID {$voter->id}, event ID {$event->id}: " . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Error: Could not record vote due to a server error.'], 500);
         }
     }
+
+    /**
+     * Helper function to check voter eligibility (Simplified: No Class Check).
+     */
+    protected function checkVoterEligibility(Voter $voter, Event $event): bool
+    {
+        // Event Restrictions
+        $eventProgrammeId = $event->programme_id;
+        $eventDepartmentId = $event->department_id;
+        $eventType = $event->type;
+        $eventGenderRestriction = $event->gender_restriction;
+
+        // Voter Information
+        $voterRole = $voter->role;
+        $voterGender = $voter->gender;
+        $voterProgrammeId = $voter->programme_id; // Direct from voter table
+
+        // Load department only if needed for check OR logging
+        $voterDepartmentId = null;
+        if ($eventDepartmentId !== null || config('logging.log_voter_details')) { // Load if checking OR if detailed logging is enabled
+             $voter->loadMissing('programme.department'); // Load the relationship chain
+             $voterDepartmentId = $voter->programme?->department_id;
+        }
+
+        Log::debug("Check Start: Voter={$voter->id}, Event={$event->id}, EDep={$eventDepartmentId}, EProg={$eventProgrammeId}, EType={$eventType}, EGender={$eventGenderRestriction} | VoterDep={$voterDepartmentId}, VoterProg={$voterProgrammeId}, VoterRole={$voterRole}, VoterGender={$voterGender}");
+
+        // --- Priority 1: Specific Department Restriction ---
+        if ($eventDepartmentId !== null) {
+            if ($voterDepartmentId != $eventDepartmentId) {
+                Log::debug("Fail: Department mismatch. Required={$eventDepartmentId}, VoterDep={$voterDepartmentId}");
+                return false;
+            }
+            Log::debug("Info: Department check passed or not required.");
+        }
+
+        // --- Priority 2: Specific Programme Restriction ---
+        if ($eventProgrammeId !== null) {
+            if ($voterProgrammeId != $eventProgrammeId) {
+                Log::debug("Fail: Programme mismatch. Required={$eventProgrammeId}, VoterProg={$voterProgrammeId}");
+                return false;
+            }
+            Log::debug("Info: Programme check passed or not required.");
+        }
+
+        // --- Priority 3: Type (Role) Check ---
+        if ($eventType === 'students' && strcasecmp($voterRole, 'student') != 0) {
+             Log::debug("Fail: Type 'students' required, Voter is '{$voterRole}'."); return false;
+        }
+        if ($eventType === 'staff' && strcasecmp($voterRole, 'staff') != 0) {
+             Log::debug("Fail: Type 'staff' required, Voter is '{$voterRole}'."); return false;
+        }
+        Log::debug("Info: Type check passed.");
+
+        // --- Priority 4: Gender Check ---
+         // *** CORRECTED: Added male check ***
+        if ($eventGenderRestriction === 'female' && strcasecmp($voterGender, 'Female') != 0) {
+            Log::debug("Fail: Gender 'Female' required, Voter is '{$voterGender}'."); return false;
+        }
+        if ($eventGenderRestriction === 'male' && strcasecmp($voterGender, 'Male') != 0) { // Make sure comparison value is consistent
+            Log::debug("Fail: Gender 'Male' required, Voter is '{$voterGender}'."); return false;
+        }
+        Log::debug("Info: Gender check passed.");
+
+        Log::debug("Pass: All eligibility checks passed.");
+        return true;
+    }
+
 
     /**
      * Get list of voters already recorded for a specific event via AJAX.
@@ -217,8 +316,12 @@ class EventController extends Controller
              $voters = Voter::whereHas('voteRecords', function ($query) use ($event) {
                 $query->where('event_id', $event->id);
              })
-             // ** CHANGE: Select 'voterID' column, adjust others **
-             ->select('id', 'voterID', 'name', 'gender', 'programme', 'email') // <<< Select voterID
+              // *** REMOVED: class_id from select ***
+              // *** ADDED: programme_id if needed ***
+             ->select('id', 'voter_id', 'name', 'gender', 'programme', 'email','role', 'programme_id') // Added programme_id
+              // *** REMOVED: with('relatedClass') ***
+              // Optional: Load programme/department if needed for display
+             ->with('programme:id,name', 'programme.department:id,name') // Load names
              ->orderByDesc(
                  VoteRecord::select('created_at')
                      ->whereColumn('vote_records.voter_id', 'voters.id')
@@ -226,7 +329,15 @@ class EventController extends Controller
                      ->latest()
                      ->take(1)
              )
-             ->get();
+             ->get()
+              // *** REMOVED: mapping class_name ***
+              // Optional: map programme/department names if needed (already loaded)
+             ->map(function ($voter) {
+                 $voter->programme_name = $voter->programme?->name;
+                 $voter->department_name = $voter->programme?->department?->name;
+                 // unset($voter->programme); // Optional: remove nested objects if only names needed
+                 return $voter;
+             });
 
             return response()->json(['voters' => $voters]);
 
@@ -234,6 +345,30 @@ class EventController extends Controller
              Log::error("Get Recorded Voters Error: Event ID {$event->id} - " . $e->getMessage());
              return response()->json(['message' => 'Could not fetch recorded voters.'], 500);
          }
+    }
+
+    /**
+     * Search for events based on query.
+     */
+    public function search(Request $request): JsonResponse
+    {
+        $query = $request->input('query', ''); 
+        // Start building the query, filtering by user
+        $eventsQuery = Event::query();
+
+        // If there is a search query, apply the multi-field search logic
+        if (!empty($query)) {
+            $eventsQuery->where(function ($q) use ($query) {
+                $searchTerm = '%' . $query . '%';
+                $q->where('title', 'LIKE', $searchTerm)
+                  ->orWhere('location', 'LIKE', $searchTerm)
+                  ->orWhere('event_date', 'LIKE', $searchTerm);
+            });
+        }
+
+        // Execute the query and order results
+        $events = $eventsQuery->with(['programme', 'department'])->latest()->get();
+        return response()->json(['events' => $events]);
     }
 
 }

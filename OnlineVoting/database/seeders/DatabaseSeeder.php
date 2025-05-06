@@ -19,5 +19,10 @@ class DatabaseSeeder extends Seeder
             'name' => 'Test User',
             'email' => 'test@example.com',
         ]);
+        // $this->call([
+        //     ScopeSeeder::class, // <-- Add ScopeSeeder here
+        //     // You can add other seeders here later if needed
+        // ]);
     }
+    
 }

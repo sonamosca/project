@@ -24,9 +24,21 @@
             {{-- Update href with route() when events route exists --}}
             <li><a href="{{route('admin.events.index')}}"><i class="fas fa-calendar-alt fa-fw"></i> Manage Events</a></li>
             {{-- Update href with route() when candidates route exists --}}
-            <li><a href="{{-- route('admin.candidates.index') --}}#candidates"><i class="fas fa-user-tie fa-fw"></i> Manage Candidates</a></li>
+            <li class="{{ request()->routeIs('admin.candidates.*') ? 'active' : '' }}">
+                <a href="{{ route('admin.candidates.index') }}"><i class="fas fa-user-tie fa-fw"></i> Manage Candidates</a>
+            </li>
             {{-- Update href with route() when voters route exists --}}
             <li><a href="{{-- route('admin.voters.index') --}}#voters"><i class="fas fa-users fa-fw"></i> ManageVoters</a></li>
+            <li class="{{ request()->routeIs('admin.programmes.*') ? 'active' : '' }}"> 
+                 <a href="{{ route('admin.programmes.index') }}">
+                     <i class="fas fa-graduation-cap fa-fw"></i> Manage Programmes
+                 </a>
+            </li>
+            <li class="{{ request()->routeIs('admin.departments.*') ? 'active' : '' }}">
+                <a href="{{ route('admin.departments.index') }}">
+                    <i class="fas fa-chalkboard-teacher fa-fw"></i> Manage Departments
+                </a>
+            </li>
         </ul>
         <p class="menu-header">Import Student Data</p>
          <ul>
