@@ -5,8 +5,14 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\AdminDashboardController as AdminDashboardController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\EventController;
+
+use App\Http\Controllers\EventCategoryController;
+use App\Http\Controllers\VotersController;
+use App\Http\Controllers\Excel;
+
 Route::get('/', function () {
     return view('welcome');
+
 });
 
 Route::get('/home',[HomeController::class,'redirect']);
@@ -83,4 +89,14 @@ Route::get('/instructions', [PageController::class, 'instructions'])->name('inst
 //     ->name('event-categories.destroy');
 
 
+
+
+
+Route::delete('/event-categories/{event}', [App\Http\Controllers\EventCategoryController::class, 'destroy'])
+    ->name('event-categories.destroy');
+
+    Route::get('voters/import', [VotersController::class, 'index'])->name('voters.index');
+    Route::post('voters/import', [VotersController::class, 'importExcelData'])->name('voters.import');
+
+    Route::post('voters/manual-add', [VotersController::class, 'manualAddVoter']);
 
