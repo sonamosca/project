@@ -11,17 +11,20 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('students', function (Blueprint $table) {
-            $table->id(); // Keeps the primary key
-
+        Schema::create('voters', function (Blueprint $table) {
+        
             // --- Add your specific student columns HERE ---
-            $table->string('first_name');
-            $table->string('last_name');
+            $table->string('voter_id', 50)->unique()->nullable();
+            $table->string('name');
+            $table->string('gender');
+            $table->string('role');
+            $table->string('programme');
+            $table->string('class');
             $table->string('email')->unique();
-            $table->string('student_id_number', 50)->unique()->nullable();
-            $table->date('date_of_birth')->nullable();
-            $table->date('enrollment_date');
-            $table->string('status', 50)->default('active');
+           
+    
+            
+           
             // --- End of specific student columns ---
 
             $table->timestamps(); // Keeps the created_at/updated_at columns
@@ -33,6 +36,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('students');
+        Schema::dropIfExists('voters');
     }
 };

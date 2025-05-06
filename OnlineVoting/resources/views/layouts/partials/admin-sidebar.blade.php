@@ -40,10 +40,10 @@
                 </a>
             </li>
         </ul>
-        <p class="menu-header">Import Student Data</p>
+        <p class="menu-header">Import Voters Data</p>
          <ul>
              {{-- Update href with route() when importing route exists --}}
-            <li><a href="{{-- route('admin.importing.index') --}}#importing"><i class="fas fa-file-import fa-fw"></i> Import Student Data</a></li>
+            <li><a href="{{route('voters.index')}}#importing"><i class="fas fa-file-import fa-fw"></i> Import Voters Data</a></li>
          </ul>
 
          <p class="menu-header">SETTINGS</p>
@@ -51,5 +51,6 @@
              {{-- Update href with route() when settings route exists --}}
             <li><a href="{{-- route('admin.settings.index') --}}#settings"><i class="fas fa-cogs fa-fw"></i> System Settings</a></li>
          </ul>
+
     </nav>
 </aside>
