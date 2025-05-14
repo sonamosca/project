@@ -320,7 +320,7 @@
         const eventDateInput = document.getElementById('event-date');
         const eventLocationInput = document.getElementById('event-location');
         // --- Get references to NEW select elements ---
-        const eventTypeSelect = document.getElementById('eventType');
+        const eventTypeSelect = document.getElementById('voterType');
         const eventGenderSelect = document.getElementById('eventGenderRestriction');
         const eventProgrammeSelect = document.getElementById('eventProgramme');
         // --- END ---

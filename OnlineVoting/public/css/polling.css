@@ -1,0 +1,447 @@
+/* public/css/polling.css */
+
+/* Basic Reset & Body */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body { /* Assuming this body tag is the one for the polling layout specifically or use .polling-officer-body from layout */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #ecf0f5; /* Light grey background for overall page */
+    color: #333;
+    min-height: 100vh;
+    /* display: flex; is not needed on body if sidebar is fixed */
+}
+
+/* --- Sidebar --- */
+.sidebar {
+    width: 230px;
+    background-color: #222d32; /* Dark sidebar */
+    color: #b8c7ce; /* Light text color for sidebar */
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    transition: width 0.3s ease, left 0.3s ease; /* Added left transition for mobile */
+    height: 100vh;
+    position: fixed; /* Fixed position */
+    top: 0;
+    left: 0;
+    z-index: 1000; /* Ensure sidebar is on top */
+    overflow-y: auto; /* Scroll for sidebar content if it overflows */
+}
+
+/* Collapsed state for Sidebar (Desktop) */
+.sidebar.collapsed {
+    width: 60px;
+}
+
+.sidebar.collapsed .sidebar-header span,
+.sidebar.collapsed .sidebar-user span,
+.sidebar.collapsed .sidebar-nav ul li a span, /* Target the span for text */
+.sidebar.collapsed .menu-header,
+.sidebar.collapsed .sidebar-logout-section span { /* Hide logout text too */
+    display: none;
+}
+
+.sidebar.collapsed .sidebar-nav ul li a {
+    text-align: center;
+    padding-left: 0;
+}
+
+.sidebar.collapsed .sidebar-nav ul li a i {
+    margin-right: 0;
+    font-size: 1.2em;
+}
+.sidebar.collapsed .sidebar-logout-section button {
+    text-align: center;
+}
+.sidebar.collapsed .sidebar-logout-section button i {
+    margin-right: 0;
+}
+
+
+.sidebar-header {
+    padding: 15px;
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #fff;
+    background-color: #1a2226;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    flex-shrink: 0; /* Prevent header from shrinking */
+}
+.sidebar-header i {
+    margin-right: 8px;
+}
+
+.sidebar-user {
+    padding: 15px;
+    text-align: center;
+    border-bottom: 1px solid #374850;
+    font-weight: bold;
+    white-space: nowrap;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.sidebar-user i {
+     margin-right: 8px;
+     color: #b8c7ce; /* Match general sidebar text color */
+}
+
+.sidebar-nav {
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+.menu-header {
+    padding: 10px 15px;
+    font-size: 0.8em;
+    color: #4b646f;
+    text-transform: uppercase;
+    font-weight: bold;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.sidebar-nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar-nav ul li a {
+    display: block;
+    padding: 12px 15px;
+    color: #b8c7ce;
+    text-decoration: none;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    display: flex; /* For icon and text alignment */
+    align-items: center;
+}
+
+.sidebar-nav ul li a i {
+    margin-right: 10px;
+    width: 20px;
+    text-align: center;
+    font-size: 1em;
+    /* vertical-align: middle; Removed as display:flex on parent handles it */
+}
+.sidebar-nav ul li a span {
+     /* vertical-align: middle; Removed */
+}
+
+
+.sidebar-nav ul li a:hover {
+    background-color: #1e282c;
+    color: #fff;
+}
+
+.sidebar-nav ul li.active > a { /* Target direct child 'a' for active state */
+    background-color: #3c8dbc; /* Active link background */
+    color: #fff;
+    font-weight: bold;
+}
+
+.sidebar .sidebar-logout-section {
+    margin-top: auto; /* Pushes to the bottom of the flex column */
+    padding: 10px 0;
+    border-top: 1px solid #374850;
+    flex-shrink: 0;
+}
+.sidebar .btn-logout-sidebar {
+    display: block;
+    width: calc(100% - 30px); /* Example width */
+    margin: 10px auto;
+    padding: 10px 15px; /* Adjusted padding */
+    color: #b8c7ce; /* Match sidebar link color */
+    background-color: #dd4b39; /* Your red logout button color */
+    border: none;
+    border-radius: 3px;
+    text-align: left; /* Or center if you prefer */
+    cursor: pointer;
+    font-size: 0.95em;
+    font-family: inherit;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    display: flex; /* Align icon and text */
+    align-items: center;
+}
+.sidebar .btn-logout-sidebar:hover {
+    background-color: #c0392b; /* Darker red on hover */
+    color: #fff;
+}
+.sidebar .btn-logout-sidebar i {
+    margin-right: 10px;
+    width: 20px;
+    text-align: center;
+}
+
+
+/* --- Main Content Area --- */
+.main-content {
+    margin-left: 230px; /* Should match .sidebar width */
+    width: calc(100% - 230px); /* Take remaining width */
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    transition: margin-left 0.3s ease, width 0.3s ease; /* Added width transition */
+    background-color: #ecf0f5; /* Background for the entire right pane */
+}
+/* Adjust main content when sidebar is collapsed */
+.sidebar.collapsed ~ .main-content { /* Using general sibling combinator */
+   margin-left: 60px; /* Match collapsed sidebar width */
+   width: calc(100% - 60px);
+}
+
+/* Top Bar */
+.top-bar {
+    background-color: #3c8dbc; /* Blue top bar */
+    color: #fff;
+    padding: 0 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Distributes items */
+    box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+    height: 50px;
+    flex-shrink: 0; /* Prevent top bar from shrinking if main-content is flex column */
+}
+
+.menu-toggle {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.2em;
+    cursor: pointer;
+    margin-right: 15px;
+    padding: 10px; /* Clickable area */
+}
+
+.breadcrumbs {
+    font-size: 0.9em;
+    /* flex-grow: 1; Removed, space-between on parent handles it better with toggle */
+}
+.breadcrumbs a {
+    color: #fff;
+    text-decoration: none;
+}
+.breadcrumbs a:hover {
+    text-decoration: underline;
+}
+.breadcrumbs span { /* For the current page part of breadcrumb */
+    color: #eee;
+    margin-left: 5px;
+}
+.breadcrumbs span:before { /* Separator */
+    content: "/";
+    margin-right: 5px;
+    color: #ddd;
+}
+
+
+.user-info {
+    display: flex;
+    align-items: center;
+}
+.user-info span { /* For user name */
+    margin-right: 10px;
+}
+.user-image { /* If you add user images in top bar */
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    margin-right: 10px;
+    border: 1px solid #fff;
+}
+.logout-btn { /* For top-bar logout */
+    color: #fff;
+    text-decoration: none;
+    margin-left: 10px;
+    padding: 5px 10px;
+    border: 1px solid rgba(255,255,255,0.5); /* Softer border */
+    border-radius: 3px;
+    transition: background-color 0.2s, color 0.2s;
+    background-color: transparent;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+}
+.logout-btn:hover {
+    background-color: rgba(255,255,255,0.15);
+    border-color: #fff;
+}
+.logout-btn i {
+    margin-right: 5px;
+}
+
+/* Content Area inside Main Content */
+.content-area {
+    padding: 20px;
+    flex-grow: 1;
+    overflow-y: auto;
+    /* background-color: #ecf0f5; /* Moved to .main-content or body to fill entire right pane */
+}
+
+.content-area > h1, /* For page titles like @yield('title') */
+.content-area > h2 { /* For main section titles like "Sub Administrator Dashboard" */
+    margin-bottom: 20px;
+    font-size: 1.8em;
+    font-weight: 300;
+    color: #333;
+}
+/* Style for the welcome paragraph */
+.content-area p.text-muted.mb-4 { /* Assuming these classes are on the welcome p tag */
+    color: #6c757d;
+    margin-bottom: 1.5rem;
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+
+/* --- Dashboard Card Styles (from polling.dashboard.blade.php) --- */
+:root {
+    --card-bg: #ffffff; /* Default for light mode, used by key-responsibilities */
+}
+.dashboard-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+.dash-card { /* This is the card style from your PO dashboard */
+    border-radius: 8px; /* Slightly more rounded than AdminLTE default */
+    padding: 1.25rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+    display: flex; /* Added for better internal alignment */
+    flex-direction: column; /* Stack elements vertically */
+}
+.dash-card h3 { font-size: 1rem; margin-bottom: 5px; font-weight: 500; opacity: 0.9; }
+.dash-card .value { font-size: 1.8rem; font-weight: 600; display: block; margin-bottom: 10px; }
+.dash-card .subtext { font-size: 0.8rem; opacity: 0.8; flex-grow:1; /* Pushes footer down */}
+.dash-card i.card-icon { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); font-size: 3.5em; opacity: 0.2; }
+.dash-card a.card-link {
+    margin-top: auto; /* Pushes to bottom if card body is flex column */
+    text-align: center;
+    background-color: rgba(0,0,0,0.15);
+    padding: 8px 0; /* Increased padding */
+    font-size: 0.85rem; /* Slightly larger */
+    color: rgba(255,255,255,0.8);
+    text-decoration: none;
+    transition: background-color 0.2s;
+    display: block; /* Make it full width of footer area */
+    border-bottom-left-radius: 8px; /* Match card radius */
+    border-bottom-right-radius: 8px;
+}
+.dash-card a.card-link:hover { background-color: rgba(0,0,0,0.3); color: #fff; }
+.dash-card a.card-link i { margin-left: 5px;}
+
+/* Card Specific Colors (from polling.dashboard.blade.php) */
+.card-blue { background: linear-gradient(45deg, #3498db, #2980b9); }
+.card-green { background: linear-gradient(45deg, #2ecc71, #27ae60); }
+.card-orange { background: linear-gradient(45deg, #e67e22, #d35400); }
+
+/* Key Responsibilities section from polling.dashboard.blade.php */
+.key-responsibilities {
+    background-color: var(--card-bg); /* Uses CSS variable */
+    border-radius: 8px;
+    padding: 1.25rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+    color: #333;
+}
+.key-responsibilities h4 { margin-bottom: 1rem; font-size: 1.1rem; font-weight: 600; border-bottom: 1px solid #eee; padding-bottom: 0.5rem; }
+.key-responsibilities .resp-item { display: inline-block; background-color: #ecf0f1; padding: 8px 15px; border-radius: 20px; margin-right: 10px; margin-bottom: 10px; font-size: 0.9rem; color: #555; border: 1px solid #dcdcdc;}
+.key-responsibilities .resp-item i { margin-right: 6px; color: #777; }
+
+
+/* --- Content Section (for general content blocks like tables, forms etc.) --- */
+.content-section {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+.content-section h2 { /* If you use h2 inside these general sections */
+    margin-bottom: 15px;
+    font-size: 1.2em;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+/* Basic Button Styling (General action button) */
+.action-button {
+    background-color: #3c8dbc;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.9em;
+    margin-right: 10px;
+    transition: background-color 0.2s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+}
+.action-button:hover {
+    background-color: #367fa9;
+}
+.action-button i {
+    margin-right: 5px;
+}
+
+/* Responsiveness (Basic Example) */
+@media (max-width: 768px) {
+    .sidebar {
+        left: -230px; /* Hidden by default on mobile */
+    }
+    .sidebar.collapsed, /* When collapsed on desktop but screen is small */
+    .sidebar.mobile-visible { /* Class to toggle for mobile visibility */
+       left: 0;
+       width: 230px; /* Full width when shown */
+    }
+
+    /* Ensure text is visible when sidebar is shown on mobile */
+    .sidebar.mobile-visible .sidebar-header span,
+    .sidebar.mobile-visible .sidebar-user span,
+    .sidebar.mobile-visible .sidebar-nav ul li a span,
+    .sidebar.mobile-visible .menu-header,
+    .sidebar.mobile-visible .sidebar-logout-section span {
+        display: inline-block;
+    }
+     .sidebar.mobile-visible .sidebar-nav ul li a {
+        text-align: left;
+        padding-left: 15px;
+    }
+     .sidebar.mobile-visible .sidebar-nav ul li a i {
+        margin-right: 10px;
+        font-size: 1em;
+    }
+    .sidebar.mobile-visible .sidebar-logout-section button {
+        text-align: left;
+    }
+    .sidebar.mobile-visible .sidebar-logout-section button i {
+         margin-right: 10px;
+    }
+
+    .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+    /* Optional: Dark overlay when mobile sidebar is open */
+    /* body.sidebar-mobile-open::after { ... } */
+
+    .top-bar .breadcrumbs {
+       display: none; /* Hide breadcrumbs to save space */
+    }
+    .menu-toggle { /* Ensure menu toggle is always visible on mobile if sidebar starts hidden */
+        display: block !important;
+    }
+}
+/* Desktop: Hide menu-toggle if sidebar is not collapsible or always visible */
+/* @media (min-width: 769px) {
+    .menu-toggle {
+        display: none; // Or keep it if you want collapse on desktop too
+    }
+} */

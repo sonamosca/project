@@ -80,23 +80,14 @@
         </div>
     </div>
 
-    <!-- Placeholder for other dashboard content like tables or charts -->
+    <!-- Placeholder for other dashboard content like tables or charts
     <div class="content-section">
         <h2>Quick Actions</h2>
          {{-- Update buttons to link to actual creation routes/modals later --}}
          {{-- Use <a> tags for navigation, <button> often implies form submission --}}
         <a href="{{-- route('admin.events.create') --}}#" class="action-button"><i class="fas fa-plus"></i> Add New Event</a>
         <a href="{{-- route('admin.candidates.create') --}}#" class="action-button"><i class="fas fa-user-plus"></i> Add New Candidate</a>
-    </div>
-
-    {{-- Comment out or remove the sections below, as they should be separate views/pages --}}
-    <!--
-    <section class="content-area" id="events" style="display: none;"><h1>Manage Events</h1>...</section>
-    <section class="content-area" id="candidates" style="display: none;"><h1>Manage Candidates</h1>...</section>
-    <section class="content-area" id="voters" style="display: none;"><h1>Manage Voters</h1>...</section>
-    <section class="content-area" id="results" style="display: none;"><h1>View Results</h1>...</section>
-    <section class="content-area" id="settings" style="display: none;"><h1>System Settings</h1>...</section>
-    -->
+    </div> -->
 @endsection
 
 {{-- Add page-specific scripts or styles if needed --}}

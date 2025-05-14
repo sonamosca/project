@@ -2,27 +2,43 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use Illuminate\Http\Request; // Keep this
+use Illuminate\Support\Facades\Auth; // Keep this
+use Illuminate\Http\RedirectResponse; // Add this for return type hint
 
 class HomeController extends Controller
 {
     /**
-     * Create a new controller instance.
-     *
-     * @return void
+     * Redirect authenticated users to their appropriate dashboard.
+     * This method is typically called after login.
      */
-    public function __construct()
+    public function redirect(Request $request): RedirectResponse // Add return type hint
     {
-        $this->middleware('auth');
+        // Check if a user is logged in
+        if (Auth::check()) {
+            $user = Auth::user();
+
+            // Use the isAdmin() method from the User model (checks the 'is_admin' column)
+            if ($user->isAdmin()) {
+                // If user IS an admin (is_admin == 1), redirect to the ADMIN dashboard route
+                return redirect()->route('admin.dashboard');
+            } else {
+                // If user IS NOT an admin (is_admin == 0), redirect to the POLLING dashboard route
+                return redirect()->route('polling.dashboard');
+            }
+        }
+
+        // If somehow accessed when not logged in, redirect to login page
+        return redirect('/login');
     }
 
     /**
-     * Show the application dashboard.
-     *
-     * @return \Illuminate\Contracts\Support\Renderable
+     * Optional: Handle direct access to /home if needed
+     * (Often the 'redirect' method is sufficient if Fortify redirects to /home)
      */
     public function index()
     {
-        return view('home');
+        // You can reuse the redirect logic here too
+        return $this->redirect(request()); // Pass the current request
     }
 }

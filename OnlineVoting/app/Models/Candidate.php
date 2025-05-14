@@ -33,5 +33,4 @@ class Candidate extends Model
         // to the 'id' primary key in the 'voters' table
         return $this->belongsTo(Voter::class);
     }
-
 }

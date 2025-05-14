@@ -3,8 +3,9 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Routing\Router; // <-- Import Router
-use App\Http\Middleware\EnsureUserIsAdmin; // <-- Import your middleware
+use Illuminate\Routing\Router;
+use App\Http\Middleware\EnsureUserIsAdmin;
+use App\Http\Middleware\EnsureUserIsPollingOfficer;
 
 class MiddlewareServiceProvider extends ServiceProvider
 {
@@ -22,5 +23,6 @@ class MiddlewareServiceProvider extends ServiceProvider
     public function boot(Router $router): void
     {
         $router->aliasMiddleware('isAdmin', EnsureUserIsAdmin::class);
+        $router->aliasMiddleware('is_polling_officer', EnsureUserIsPollingOfficer::class);
     }
 }

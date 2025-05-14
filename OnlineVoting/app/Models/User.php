@@ -9,13 +9,11 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Sanctum\HasApiTokens;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+// use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
 {
     use HasApiTokens;
-
-    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory;
     use HasProfilePhoto;
     use Notifiable;
@@ -32,6 +30,7 @@ class User extends Authenticatable
         'phone',
         'address',
         'password',
+        'role',
     ];
 
     /**
@@ -65,10 +64,27 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            // 'is_admin' => 'boolean',
         ];
     }
-    public function events(): HasMany
+    // --- Define Role Constants ---
+    public const ROLE_ADMIN = 'admin';
+    public const ROLE_POLLING_OFFICER = 'polling_officer';
+
+    /**
+     * Check if the user is a super administrator.
+     * This method NOW uses the 'role' column.
+     */
+     public function isAdmin(): bool
     {
-        return $this->hasMany(Event::class, 'user_id');
+        return $this->role === self::ROLE_ADMIN;
     }
+    /**
+     * Check if the user is a polling officer.
+     */
+    public function isPollingOfficer(): bool
+    {
+        return $this->role === self::ROLE_POLLING_OFFICER;
+    }                          
+
 }

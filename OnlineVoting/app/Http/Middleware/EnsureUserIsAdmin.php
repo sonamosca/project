@@ -18,7 +18,7 @@ class EnsureUserIsAdmin
     {
         // 1. Check if user is logged in (authenticated)
         // 2. If logged in, check if their 'is_admin' database column is true (or 1)
-        if (Auth::check() && Auth::user()->is_admin) {
+        if (Auth::check() && Auth::user()->isAdmin()) {
             // If BOTH conditions are true, let the request continue to the controller
             return $next($request);
         }

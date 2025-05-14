@@ -39,11 +39,20 @@
                     <i class="fas fa-chalkboard-teacher fa-fw"></i> Manage Departments
                 </a>
             </li>
+            <li class="{{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                <a href="{{ route('admin.users.index') }}">
+                    <i class="fas fa-users-cog"></i> Manage Users
+                </a>
+            </li>
         </ul>
         <p class="menu-header">Import Voters Data</p>
          <ul>
              {{-- Update href with route() when importing route exists --}}
-            <li><a href="{{route('voters.index')}}#importing"><i class="fas fa-file-import fa-fw"></i> Import Voters Data</a></li>
+            <li class="{{ request()->routeIs('admin.voters.manage.index') ? 'active' : '' }}">
+                <a href="{{ route('admin.voters.manage.index') }}">
+                    <i class="fas fa-file-import fa-fw"></i> Import Voters Data 
+                </a>
+            </li>
          </ul>
 
          <p class="menu-header">SETTINGS</p>
@@ -51,6 +60,5 @@
              {{-- Update href with route() when settings route exists --}}
             <li><a href="{{-- route('admin.settings.index') --}}#settings"><i class="fas fa-cogs fa-fw"></i> System Settings</a></li>
          </ul>
-
     </nav>
 </aside>

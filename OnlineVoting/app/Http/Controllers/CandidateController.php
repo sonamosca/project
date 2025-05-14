@@ -7,14 +7,15 @@ use Illuminate\View\View;
 use App\Models\Event;
 use App\Models\Candidate;
 use App\Models\Voter;
-use App\Models\Programme; // Keep
-use App\Models\Department; // Keep
+use App\Models\Programme; 
+use App\Models\Department; 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Redirect; // Added
-use Illuminate\Database\QueryException;  // Added
-use App\Http\Controllers\EventController; // Added for eligibility check
-use Illuminate\Support\Facades\Storage; // Added for photo deletion
+use Illuminate\Support\Facades\Redirect;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Database\QueryException;  
+use App\Http\Controllers\EventController; 
+use Illuminate\Support\Facades\Storage; 
 
 class CandidateController extends Controller
 {
@@ -114,8 +115,8 @@ class CandidateController extends Controller
                 'voter_id'       => $voter->voter_id,
                 'name'           => $voter->name,
                 'gender'         => $voter->gender,
-                'programme_name' => $voter->programme?->name ?? 'N/A',
-                'department_name'=> $voter->programme?->department?->name ?? 'N/A',
+                'programme' => $voter->programme?->name ?? 'N/A',
+                'department'=> $voter->programme?->department?->name ?? 'N/A',
                 'email'          => $voter->email,
                 'role'           => $voter->role,
             ];
@@ -191,7 +192,9 @@ class CandidateController extends Controller
             ]);
 
             Log::info("Candidate added successfully.", ['event_id' => $eventId, 'voter_id' => $voterId]);
-            return Redirect::route('admin.candidates.manage', ['event' => $eventId])->with('success', 'Candidate added successfully!');
+            // return Redirect::route('admin.candidates.manage', ['event' => $eventId])->with('success', 'Candidate added successfully!');
+            return Redirect::route('admin.candidates.view.index', ['event_id' => $eventId])
+                           ->with('success', 'Candidate added successfully!');
 
         } catch (QueryException $e) {
             Log::error("Error saving candidate: " . $e->getMessage());
@@ -233,4 +236,32 @@ class CandidateController extends Controller
              return Redirect::route('admin.candidates.manage', ['event' => $eventId])->with('error', 'Could not remove candidate.');
          }
      }
+     public function viewByEvent(Request $request): View
+    {
+        // Fetch all events for the dropdown, ordered by date or title
+        $events = Event::orderBy('event_date', 'desc')->orderBy('title', 'asc')->get(['id', 'title']);
+
+        $selectedEvent = null;
+        $candidates = collect(); // Initialize as an empty collection
+
+        // Check if an event_id is present in the request (i.e., an event has been selected)
+        if ($request->has('event_id') && $request->event_id != '') {
+            $selectedEventId = $request->input('event_id');
+            $selectedEvent = Event::find($selectedEventId);
+
+            if ($selectedEvent) {
+                $candidates = Candidate::where('event_id', $selectedEventId)
+                    ->with([
+                        'voter:id,voter_id,name,gender,email,programme_id,role', // Added role back here
+                        'voter.programme:id,name' // Assuming Voter has a 'programme' relationship
+                                                 // and Programme model has a 'name' attribute.
+                                                 // Adjust if your Voter model stores programme name directly.
+                    ])
+                    ->orderBy('id', 'asc') // Or order by voter name, etc.
+                    ->get();
+            }
+        }
+
+        return view('admin.candidates.view_by_event', compact('events', 'selectedEvent', 'candidates'));
+    }
 }

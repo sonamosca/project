@@ -243,7 +243,7 @@ class EventController extends Controller
     /**
      * Helper function to check voter eligibility (Simplified: No Class Check).
      */
-    protected function checkVoterEligibility(Voter $voter, Event $event): bool
+    public function checkVoterEligibility(Voter $voter, Event $event): bool
     {
         // Event Restrictions
         $eventProgrammeId = $event->programme_id;
@@ -294,11 +294,11 @@ class EventController extends Controller
 
         // --- Priority 4: Gender Check ---
          // *** CORRECTED: Added male check ***
-        if ($eventGenderRestriction === 'female' && strcasecmp($voterGender, 'Female') != 0) {
-            Log::debug("Fail: Gender 'Female' required, Voter is '{$voterGender}'."); return false;
+        if ($eventGenderRestriction === 'female' && strcasecmp($voterGender, 'female') != 0) {
+            Log::debug("Fail: Gender 'female' required, Voter is '{$voterGender}'."); return false;
         }
-        if ($eventGenderRestriction === 'male' && strcasecmp($voterGender, 'Male') != 0) { // Make sure comparison value is consistent
-            Log::debug("Fail: Gender 'Male' required, Voter is '{$voterGender}'."); return false;
+        if ($eventGenderRestriction === 'male' && strcasecmp($voterGender, 'male') != 0) { // Make sure comparison value is consistent
+            Log::debug("Fail: Gender 'male' required, Voter is '{$voterGender}'."); return false;
         }
         Log::debug("Info: Gender check passed.");
 
